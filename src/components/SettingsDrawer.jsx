@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { X, LogOut, Bell, Download, Upload } from 'lucide-react'
+import { X, LogOut, Bell, Download, MapPin, Navigation, Upload } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { db, getSetting, setSetting } from '../lib/db'
 import { isSupabaseConfigured } from '../lib/supabaseClient'
+import { CITY_PRESETS, loadLocation, saveLocation } from '../lib/prayerTimes'
 import { t } from '../lib/i18n'
 
 export default function SettingsDrawer({ open, onClose, theme, onToggleTheme, lang = 'en', onSetLang, onDataRestored }) {
@@ -14,13 +15,39 @@ export default function SettingsDrawer({ open, onClose, theme, onToggleTheme, la
   const [reminderOn, setReminderOn] = useState(false)
   const [reminderTime, setReminderTime] = useState('07:00')
   const [backupMsg, setBackupMsg] = useState('')
+  const [loc, setLoc] = useState(null)
+  const [locMsg, setLocMsg] = useState('')
   const fileRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
     getSetting('preferences', {}).then((p) => setName(p.display_name || ''))
     getSetting('reminder', { enabled: false, time: '07:00' }).then((r) => { setReminderOn(!!r.enabled); setReminderTime(r.time || '07:00') })
+    setLoc(loadLocation())
   }, [open ])
+
+  function pickCity(name) {
+    const city = CITY_PRESETS.find((c) => c.name === name)
+    if (!city) return
+    const next = { ...city }
+    saveLocation(next)
+    setLoc(next)
+    setLocMsg(t(lang, 'locationSet'))
+  }
+
+  function useMyLocation() {
+    if (!('geolocation' in navigator)) { setLocMsg(t(lang, 'locationFail')); return }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const next = { name: 'My Location', country: '', lat: Math.round(pos.coords.latitude * 10000) / 10000, lng: Math.round(pos.coords.longitude * 10000) / 10000 }
+        saveLocation(next)
+        setLoc(next)
+        setLocMsg(t(lang, 'locationSet'))
+      },
+      () => setLocMsg(t(lang, 'locationFail')),
+      { timeout: 10000 }
+    )
+  }
 
   if (!open) return null
 
@@ -123,6 +150,20 @@ export default function SettingsDrawer({ open, onClose, theme, onToggleTheme, la
             <input type="time" value={reminderTime} onChange={(e) => saveReminder(reminderOn, e.target.value)} className="rounded-xl border border-gold/25 bg-white/5 px-3 py-2 text-sm" aria-label="Reminder time" />
           </div>
           <p className="text-[11px] opacity-60 mt-2">{t(lang, 'reminderHelp')}</p>
+        </div>
+
+        <div className="mt-6 border-t border-gold/20 pt-4">
+          <p className={`${sectionTitle} inline-flex items-center gap-1.5`}><MapPin size={14} /> {t(lang, 'locationTitle')}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <select value={loc && CITY_PRESETS.some((c) => c.name === loc.name) ? loc.name : ''} onChange={(e) => pickCity(e.target.value)} className="flex-1 min-w-[150px] rounded-xl border border-gold/25 bg-white/5 px-3 py-2.5 text-sm outline-none focus:border-gold" aria-label={t(lang, 'locationTitle')}>
+              <option value="" disabled>{loc ? loc.name : 'Select city'}</option>
+              {CITY_PRESETS.map((c) => <option key={c.name} value={c.name} className="text-black">{c.name}{c.country ? `, ${c.country}` : ''}</option>)}
+            </select>
+            <button onClick={useMyLocation} className="inline-flex items-center gap-1 px-3 py-2 rounded-full border border-gold/40 text-xs font-bold"><Navigation size={13} /> {t(lang, 'useMyLocation')}</button>
+          </div>
+          {loc && <p className="text-[11px] opacity-60 mt-2">{loc.name} · {loc.lat}, {loc.lng}{loc.isDefault ? ` (${t(lang, 'defaultCity')})` : ''}</p>}
+          {locMsg && <p className="text-xs text-gold mt-1">{locMsg}</p>}
+          <p className="text-[11px] opacity-60 mt-2">{t(lang, 'locationHelp')}</p>
         </div>
 
         <div className="mt-6 border-t border-gold/20 pt-4">
