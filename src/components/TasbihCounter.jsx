@@ -3,6 +3,7 @@ import { RotateCcw, Volume2, VolumeX } from 'lucide-react'
 import { addTaps, db, getSetting, queueSync, recordHistorySnapshot, setSetting, todayLocal } from '../lib/db'
 import { syncNow } from '../lib/sync'
 import { t } from '../lib/i18n'
+import WakeLockButton from './WakeLockButton'
 
 const SOUND_KEY = 'wl-tasbih-sound'
 
@@ -10,6 +11,7 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
   const target = freeMode ? Infinity : (routine?.target_count || wazifa.target_count || 33)
   const [count, setCount] = useState(routine?.current_count || 0)
   const [rounds, setRounds] = useState(routine?.rounds_today || 0)
+  const [lifetime, setLifetime] = useState(routine?.lifetime_count || 0)
   const [pulse, setPulse] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const [soundOn, setSoundOn] = useState(() => { try { return localStorage.getItem(SOUND_KEY) === '1' } catch { return false } })
@@ -18,10 +20,10 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
   const stateRef = useRef({ count: routine?.current_count || 0, rounds: routine?.rounds_today || 0 })
   stateRef.current = { count, rounds }
 
-  useEffect(() => { setCount(routine?.current_count || 0); setRounds(routine?.rounds_today || 0) }, [wazifa.id])
+  useEffect(() => { setCount(routine?.current_count || 0); setRounds(routine?.rounds_today || 0); setLifetime(routine?.lifetime_count || 0) }, [wazifa.id])
   useEffect(() => () => { if (confirmTimer.current) clearTimeout(confirmTimer.current) }, [])
 
-  async function save(next, nextRounds) {
+  async function save(next, nextRounds, nextLifetime) {
     const completed = !freeMode && next >= target
     const row = {
       wazifa_id: wazifa.id,
@@ -30,6 +32,7 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
       target_count: freeMode ? (routine?.target_count || wazifa.target_count || 33) : target,
       completed_today: freeMode ? (routine?.completed_today || false) : completed,
       rounds_today: nextRounds,
+      lifetime_count: typeof nextLifetime === 'number' ? nextLifetime : lifetime,
       last_reset_date: todayLocal(),
       updated_at: new Date().toISOString()
     }
@@ -61,7 +64,9 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
   function tap() {
     if (!freeMode && count >= target) return
     const next = count + 1
+    const nextLifetime = lifetime + 1
     setCount(next)
+    setLifetime(nextLifetime)
     if (navigator.vibrate) navigator.vibrate(25)
     if (soundOn) playTick()
     addTaps(1)
@@ -71,17 +76,17 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
       setPulse(true); setTimeout(() => setPulse(false), 900)
       const r = rounds + 1
       setRounds(r)
-      save(next, r)
+      save(next, r, nextLifetime)
       onComplete && onComplete(next)
       return
     }
-    save(next, rounds)
+    save(next, rounds, nextLifetime)
   }
 
   function continueRound() {
     setCount(0)
     onCountChange && onCountChange(0)
-    save(0, rounds)
+    save(0, rounds, lifetime)
   }
 
   function handleReset() {
@@ -95,7 +100,7 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
     setCount(0)
     setRounds(0)
     onCountChange && onCountChange(0)
-    save(0, 0)
+    save(0, 0, lifetime)
   }
 
   function toggleSound() {
@@ -112,10 +117,13 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
   return (
     <div className="rounded-3xl border border-gold/30 p-4 mt-4 bg-black/10">
       <div className="flex items-center justify-between text-xs opacity-80">
-        <span>{freeMode ? t(lang, 'freeMode') : 'Digital Tasbih'}{rounds > 0 && !freeMode ? ` · ${t(lang, 'rounds')}: ${rounds}` : ''}</span>
-        <button onClick={toggleSound} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-gold/30" aria-label="Toggle tap sound" aria-pressed={soundOn}>
-          {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />} Sound {soundOn ? 'On' : 'Off'}
-        </button>
+        <span>{freeMode ? t(lang, 'freeMode') : 'Digital Tasbih'}{rounds > 0 && !freeMode ? ` · ${t(lang, 'rounds')}: ${rounds}` : ''}{lifetime > 0 ? ` · ${t(lang, 'lifetime')}: ${lifetime.toLocaleString()}` : ''}</span>
+        <span className="inline-flex items-center gap-1.5">
+          <WakeLockButton lang={lang} compact />
+          <button onClick={toggleSound} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-gold/30" aria-label="Toggle tap sound" aria-pressed={soundOn}>
+            {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />} Sound {soundOn ? 'On' : 'Off'}
+          </button>
+        </span>
       </div>
 
       <button onClick={tap} aria-label={freeMode ? `Free tasbih counter, ${count}. Tap to count.` : `Tasbih counter, ${count} of ${target}. Tap to count.`}
