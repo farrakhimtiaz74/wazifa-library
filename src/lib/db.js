@@ -1,6 +1,10 @@
 import Dexie from 'dexie'
+import { getActiveProfileId, PROFILE_DB_NAMES } from './profiles'
 
-export const db = new Dexie('wazifa-library')
+// Item 94: the active profile decides which database opens. Profile 1 uses
+// the original 'wazifa-library' name, so existing installs keep every row.
+export const ACTIVE_PROFILE_ID = getActiveProfileId()
+export const db = new Dexie(PROFILE_DB_NAMES[ACTIVE_PROFILE_ID] || 'wazifa-library')
 
 db.version(1).stores({
   routines: 'wazifa_id, is_bookmarked, updated_at',
@@ -23,6 +27,30 @@ db.version(3).stores({
   settings: 'key',
   syncQueue: '++id, type, created_at',
   history: 'date'
+})
+
+db.version(4).stores({
+  routines: 'wazifa_id, is_bookmarked, updated_at',
+  customWazaif: 'id, category, updated_at',
+  settings: 'key',
+  syncQueue: '++id, type, created_at',
+  history: 'date',
+  prayerLog: 'date',
+  qaza: 'prayer'
+})
+
+db.version(5).stores({
+  routines: 'wazifa_id, is_bookmarked, updated_at',
+  customWazaif: 'id, category, updated_at',
+  settings: 'key',
+  syncQueue: '++id, type, created_at',
+  history: 'date',
+  prayerLog: 'date',
+  qaza: 'prayer',
+  // Wave 3: per-dhikr daily totals (item 27) — one row per day+dhikr key,
+  // id is `${date}|${key}`; and the personal Dua Journal (item 33).
+  dhikrLog: 'id, date, key',
+  duaJournal: 'id, created_at'
 }).upgrade(async (tx) => {
   await tx.table('routines').toCollection().modify((r) => {
     if (typeof r.lifetime_count !== 'number') r.lifetime_count = r.current_count || 0
