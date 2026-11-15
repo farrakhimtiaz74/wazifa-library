@@ -33,7 +33,7 @@ export default function CustomWazifaModal({ initial, onClose, onSaved }) {
           <input className={inputCls} type="number" min="1" placeholder="Target count" value={form.target_count} onChange={(e) => set('target_count', e.target.value)} />
           <input className={inputCls} placeholder="Recommended time" value={form.recommended_time} onChange={(e) => set('recommended_time', e.target.value)} />
         </div>
-        <textarea className={inputCls} rows={2} placeholder="Instructions" value={form.instructions} onChange={(e) => set('instructions', e.target.value)} />
+        <textarea className={inputCls} rows={2} placeholder="Notes / Instructions" value={form.instructions} onChange={(e) => set('instructions', e.target.value)} />
         <button className="w-full py-3 rounded-2xl bg-gold text-black font-bold text-sm">Save Wazifa</button>
       </form>
     </div>
