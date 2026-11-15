@@ -8,11 +8,19 @@ A complete, production-ready, mobile-first **Wazifa Library** Progressive Web Ap
 React (Vite) · Tailwind CSS v3 · Lucide Icons · Dexie.js (IndexedDB) · Supabase (Auth + PostgreSQL) · Fuse.js · vite-plugin-pwa
 
 ## Features
-- 12 authentic seeded Wazaif across all categories (Rizq, Shifa, Protection, Marriage & Family, Peace & Anxiety, Istighfar, Daily Adhkar) with references
+- 46 authentic seeded Wazaif across all categories (Rizq, Shifa, Protection, Marriage & Family, Peace & Anxiety, Istighfar, Daily Adhkar) with references
+- Morning & Evening Adhkar sets — guided sequential runner with auto-advance, completion summary and sharing
+- Asma-ul-Husna: all 99 Names of Allah (searchable), each with its own Tasbih session
+- Wazifa of the Day on Home + Hijri date in the header (Intl Islamic calendar, no API)
 - Fuzzy search across Arabic / transliteration / English / Urdu / keywords (try "stress", "debt", "barakah")
-- Reader with script toggles + Arabic font-size (A−/A+), persisted preferences
-- Digital Tasbih: tap to count, haptic vibration, completion pulse, auto-save to IndexedDB
-- My Routine: bookmarks, daily progress, 24h local-timezone reset, streak on full completion
+- Reader with script toggles + Arabic font-size slider (A−/A+), Listen (Arabic text-to-speech), Share/Copy, WhatsApp share, and a downloadable/shareable Wazifa image card (1080×1350 PNG)
+- Digital Tasbih: SVG progress ring, tap to count, haptic vibration, completion double-pulse, sound tick option, rounds tracking, plus a Free Tasbih mode with no target
+- Custom target per Wazifa (presets 33/100/313/450/1000 or any number), saved per routine
+- My Routine: bookmarks, daily progress bars, midnight local-timezone reset, streak on full completion
+- History & Stats: month calendar of completions, current/longest streak, total dhikr taps, weekly completions
+- Daily reminder (in-app banner + notification while the app is open; set time in Settings)
+- Backup & Restore: export/import all local data (routines, custom Wazaif, settings, history) as JSON
+- Interface language toggle: English / اردو (Urdu UI labels)
 - Custom Wazaif: add/edit, stored locally and synced to `custom_wazaif`
 - Offline-first sync engine: local writes are instant; when signed in + online, data syncs to Supabase and merges by `updated_at` (newer wins); guest progress merges on first sign-in
 - Dark mode (Deep Emerald `#062C22`) default + Light mode (Cream `#FAF8F5`, Forest `#0D4F3C`, Gold `#D4AF37`)
