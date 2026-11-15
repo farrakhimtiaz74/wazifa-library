@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Bookmark, BookmarkCheck, Check, Headphones, ImageDown, MessageCircle, Minus, Plus, Share2, ShieldCheck, Square, Target } from 'lucide-react'
+import { ArrowLeft, Bookmark, BookmarkCheck, Check, Headphones, ImageDown, Maximize2, MessageCircle, Minimize2, Minus, Plus, Share2, ShieldCheck, Square, Target } from 'lucide-react'
 import { db, getSetting, queueSync, setSetting, todayLocal } from '../lib/db'
 import { syncNow } from '../lib/sync'
 import { shareWazifa, whatsAppShareUrl } from '../lib/share'
 import { shareOrDownloadImageCard } from '../lib/imageCard'
 import { categoryLabel, t } from '../lib/i18n'
 import TasbihCounter from './TasbihCounter'
+import WakeLockButton from './WakeLockButton'
 
 const FONT_KEY = 'wl-arabic-font-size'
 const FONT_MIN = 24
@@ -31,6 +32,7 @@ export default function WazifaReader({ wazifa, routine, onBack, onToggleBookmark
   const [targetOpen, setTargetOpen] = useState(false)
   const [customTarget, setCustomTarget] = useState('')
   const [cardState, setCardState] = useState('')
+  const [focus, setFocus] = useState(false)
   const chunksRef = useRef([])
 
   useEffect(() => {
@@ -77,6 +79,7 @@ export default function WazifaReader({ wazifa, routine, onBack, onToggleBookmark
       target_count: v,
       completed_today: cur >= v,
       rounds_today: routine?.rounds_today || 0,
+      lifetime_count: routine?.lifetime_count || 0,
       last_reset_date: todayLocal(),
       updated_at: new Date().toISOString()
     }
@@ -126,6 +129,27 @@ export default function WazifaReader({ wazifa, routine, onBack, onToggleBookmark
 
   const effectiveTarget = routine?.target_count || wazifa.target_count
   const toggleCls = (on) => `px-2.5 py-1 rounded-full text-[11px] border ${on ? 'bg-gold text-black border-gold font-bold' : 'border-gold/30 opacity-70'}`
+
+  if (focus) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-4 pb-28 min-h-screen flex flex-col">
+        <div className="flex items-center justify-between">
+          <span className={`text-xs font-bold text-gold uppercase tracking-wider ${lang === 'ur' ? 'font-urdu normal-case tracking-normal' : ''}`}>{t(lang, 'focusMode')}</span>
+          <span className="inline-flex items-center gap-1.5">
+            <WakeLockButton lang={lang} />
+            <button onClick={() => setFocus(false)} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-gold text-black text-[11px] font-bold" aria-label={t(lang, 'exitFocus')}>
+              <Minimize2 size={12} /> {t(lang, 'exitFocus')}
+            </button>
+          </span>
+        </div>
+        <h2 className="text-lg font-extrabold mt-4 text-center">{wazifa.title}</h2>
+        <div className="rounded-3xl border border-gold/25 p-6 mt-4 bg-white/5 flex-1 flex items-center justify-center">
+          <p className="font-arabic text-center" dir="rtl" style={{ fontSize: Math.max(fontSize, 34) }}>{wazifa.arabic}</p>
+        </div>
+        <TasbihCounter wazifa={wazifa} routine={routine} onRoutineChange={onRoutineChange} freeMode={freeMode} lang={lang} />
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 pb-28">
@@ -185,6 +209,10 @@ export default function WazifaReader({ wazifa, routine, onBack, onToggleBookmark
           <button onClick={listen} className={`px-2.5 py-1 rounded-full text-[11px] border inline-flex items-center gap-1 ${speaking ? 'bg-gold text-black border-gold font-bold' : 'border-gold/30 opacity-80'}`}>
             {speaking ? <Square size={11} /> : <Headphones size={11} />} {speaking ? t(lang, 'stop') : t(lang, 'listen')}
           </button>
+          <WakeLockButton lang={lang} />
+          <button onClick={() => setFocus(true)} className="px-2.5 py-1 rounded-full text-[11px] border border-gold/30 opacity-80 inline-flex items-center gap-1" aria-label={t(lang, 'focusMode')}>
+            <Maximize2 size={11} /> {t(lang, 'focusMode')}
+          </button>
         </div>
         <div className="flex items-center gap-2 mt-2">
           <button onClick={() => applyFontSize(fontSize - 2)} className="w-8 h-8 grid place-items-center border border-gold/30 rounded-full shrink-0" aria-label="Decrease Arabic font size"><Minus size={13} /></button>
@@ -204,6 +232,9 @@ export default function WazifaReader({ wazifa, routine, onBack, onToggleBookmark
       </div>
       {wazifa.instructions && <p className="mt-4 text-sm leading-relaxed opacity-85">{wazifa.instructions}</p>}
       <TasbihCounter wazifa={wazifa} routine={routine} onRoutineChange={onRoutineChange} freeMode={freeMode} lang={lang} />
+      {routine?.lifetime_count > 0 && (
+        <p className="text-center text-xs opacity-75 mt-3">{t(lang, 'lifetime')}: <b className="text-gold">{routine.lifetime_count.toLocaleString()}</b> · {t(lang, 'lifetimeNote')}</p>
+      )}
     </div>
   )
 }
