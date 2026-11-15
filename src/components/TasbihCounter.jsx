@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { RotateCcw, Volume2, VolumeX } from 'lucide-react'
+import { Moon, RotateCcw, Volume2, VolumeX } from 'lucide-react'
 import { addTaps, db, getSetting, queueSync, recordHistorySnapshot, setSetting, todayLocal } from '../lib/db'
+import { recordDhikr, WAZIFA_DHIKR_KEYS } from '../lib/dhikrStats'
 import { syncNow } from '../lib/sync'
 import { t } from '../lib/i18n'
-import WakeLockButton from './WakeLockButton'
 
 const SOUND_KEY = 'wl-tasbih-sound'
 
-export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMode = false, lang = 'en', onCountChange, onComplete }) {
+export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMode = false, lang = 'en', onCountChange, onComplete, kids = false }) {
   const target = freeMode ? Infinity : (routine?.target_count || wazifa.target_count || 33)
   const [count, setCount] = useState(routine?.current_count || 0)
   const [rounds, setRounds] = useState(routine?.rounds_today || 0)
@@ -15,6 +15,8 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
   const [pulse, setPulse] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
   const [soundOn, setSoundOn] = useState(() => { try { return localStorage.getItem(SOUND_KEY) === '1' } catch { return false } })
+  // Item 28: Mosque mode — per-session only, never persisted.
+  const [mosque, setMosque] = useState(false)
   const audioRef = useRef(null)
   const confirmTimer = useRef(null)
   const stateRef = useRef({ count: routine?.current_count || 0, rounds: routine?.rounds_today || 0 })
@@ -67,12 +69,17 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
     const nextLifetime = lifetime + 1
     setCount(next)
     setLifetime(nextLifetime)
-    if (navigator.vibrate) navigator.vibrate(25)
-    if (soundOn) playTick()
+    if (navigator.vibrate) navigator.vibrate(mosque ? 10 : 25)
+    if (soundOn && !mosque) playTick()
     addTaps(1)
+    // Item 27: feed the per-dhikr daily totals (presets pass their own key
+    // via the preset-<key> routine id; library wazaif use the mapping).
+    const dhikrKey = wazifa.id.startsWith('preset-') ? wazifa.id.slice(7) : wazifa.id.startsWith('durood-') ? 'durood' : WAZIFA_DHIKR_KEYS[wazifa.id]
+    if (dhikrKey) recordDhikr(dhikrKey, 1)
     onCountChange && onCountChange(next)
     if (!freeMode && next >= target) {
-      if (navigator.vibrate) navigator.vibrate([120, 60, 120, 60, 200])
+      // Mosque mode: a single short vibration at target instead of the pattern.
+      if (navigator.vibrate) navigator.vibrate(mosque ? 40 : [120, 60, 120, 60, 200])
       setPulse(true); setTimeout(() => setPulse(false), 900)
       const r = rounds + 1
       setRounds(r)
@@ -115,19 +122,22 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
   const progress = freeMode ? 0 : Math.min(1, count / target)
   const done = !freeMode && count >= target
   return (
-    <div className="rounded-3xl border border-gold/30 p-4 mt-4 bg-black/10">
+    <div className={`rounded-3xl border border-gold/30 p-4 mt-4 bg-black/10 ${mosque ? 'mosque-mode' : ''}`}>
       <div className="flex items-center justify-between text-xs opacity-80">
-        <span>{freeMode ? t(lang, 'freeMode') : 'Digital Tasbih'}{rounds > 0 && !freeMode ? ` · ${t(lang, 'rounds')}: ${rounds}` : ''}{lifetime > 0 ? ` · ${t(lang, 'lifetime')}: ${lifetime.toLocaleString()}` : ''}</span>
+        <span>{freeMode ? t(lang, 'freeMode') : t(lang, 'digitalTasbih')}{rounds > 0 && !freeMode ? ` · ${t(lang, 'rounds')}: ${rounds}` : ''}{lifetime > 0 ? ` · ${t(lang, 'lifetime')}: ${lifetime.toLocaleString()}` : ''}</span>
         <span className="inline-flex items-center gap-1.5">
-          <WakeLockButton lang={lang} compact />
-          <button onClick={toggleSound} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-gold/30" aria-label="Toggle tap sound" aria-pressed={soundOn}>
-            {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />} Sound {soundOn ? 'On' : 'Off'}
+          <button onClick={() => setMosque(!mosque)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border ${mosque ? 'bg-gold text-black border-gold font-bold' : 'border-gold/30'}`} aria-label={t(lang, 'mosqueMode')} aria-pressed={mosque}>
+            <Moon size={13} /> {t(lang, 'mosqueMode')}
+          </button>
+          <button onClick={toggleSound} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-gold/30" aria-label={t(lang, 'soundLabel')} aria-pressed={soundOn}>
+            {soundOn ? <Volume2 size={13} /> : <VolumeX size={13} />} {t(lang, 'soundLabel')} {soundOn ? t(lang, 'on') : t(lang, 'off')}
           </button>
         </span>
       </div>
+      {mosque && <p className="text-[11px] opacity-70 mt-2">{t(lang, 'mosqueModeHelp')}</p>}
 
       <button onClick={tap} aria-label={freeMode ? `Free tasbih counter, ${count}. Tap to count.` : `Tasbih counter, ${count} of ${target}. Tap to count.`}
-        className={`relative mx-auto mt-3 block w-[200px] h-[200px] min-h-[180px] rounded-full select-none touch-manipulation ${pulse ? 'animate-pulse-ring' : ''}`}>
+        className={`relative mx-auto mt-3 block w-[200px] h-[200px] min-h-[180px] rounded-full select-none touch-manipulation ${pulse ? 'animate-pulse-ring' : ''} ${kids ? 'scale-125 my-8' : ''}`}>
         <svg width="200" height="200" viewBox="0 0 200 200" className="absolute inset-0">
           <circle cx="100" cy="100" r={R} fill="rgba(212,175,55,0.08)" stroke="rgba(6,44,34,0.55)" strokeWidth="10" />
           {!freeMode && <circle cx="100" cy="100" r={R} fill="none" stroke="#D4AF37" strokeWidth="10" strokeLinecap="round"
@@ -146,7 +156,7 @@ export default function TasbihCounter({ wazifa, routine, onRoutineChange, freeMo
       {done && (
         <div className="text-center mt-3 space-y-2">
           <p className="text-gold font-bold text-sm">{t(lang, 'completed')}</p>
-          <p className="text-[11px] opacity-70">{t(lang, 'rounds')}: {rounds} · Total: {rounds * target}</p>
+          <p className="text-[11px] opacity-70">{t(lang, 'rounds')}: {rounds} · {t(lang, 'totalLabel')}: {rounds * target}</p>
           <button onClick={continueRound} className="px-4 py-2 rounded-full bg-gold text-black text-xs font-bold">{t(lang, 'continueNext')}</button>
         </div>
       )}

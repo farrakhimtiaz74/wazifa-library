@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, Pause, Play, Share2 } from 'lucide-react'
 import TasbihCounter from './TasbihCounter'
 import { getSetting, setSetting, todayLocal } from '../lib/db'
+import { t } from '../lib/i18n'
 
 export default function AdhkarRunner({ set, routines, onRoutineChange, onBack, lang = 'en' }) {
   const items = set.items
@@ -75,20 +76,20 @@ export default function AdhkarRunner({ set, routines, onRoutineChange, onBack, l
     if (navigator.share) {
       try { await navigator.share({ title: set.titleEn, text }); return } catch (err) { if (err && err.name === 'AbortError') return }
     }
-    try { await navigator.clipboard.writeText(text); setShareState('Copied!'); setTimeout(() => setShareState(''), 2000) } catch { /* clipboard unavailable */ }
+    try { await navigator.clipboard.writeText(text); setShareState(t(lang, 'copied')); setTimeout(() => setShareState(''), 2000) } catch { /* clipboard unavailable */ }
   }
 
   if (finished) {
     const mins = Math.max(1, Math.round((Date.now() - startRef.current) / 60000))
     return (
       <div className="max-w-2xl mx-auto px-4 py-4 pb-28">
-        <button onClick={onBack} className="inline-flex items-center gap-1 text-sm"><ArrowLeft size={17} /> {lang === 'ur' ? 'واپس' : 'Back'}</button>
+        <button onClick={onBack} className="inline-flex items-center gap-1 text-sm"><ArrowLeft size={17} /> {t(lang, 'back')}</button>
         <div className="rounded-3xl border border-gold/30 p-6 mt-6 bg-gold/10 text-center">
           <span className="mx-auto w-14 h-14 rounded-full bg-gold text-black grid place-items-center"><Check size={28} /></span>
-          <h2 className="text-xl font-extrabold mt-3">{set.titleEn} Complete — Alhamdulillah!</h2>
-          <p className="text-sm opacity-80 mt-2">{items.length} adhkar · {totalCount} total recitations · about {mins} min</p>
+          <h2 className="text-xl font-extrabold mt-3">{set.titleEn} {t(lang, 'completeWord')} — Alhamdulillah!</h2>
+          <p className="text-sm opacity-80 mt-2">{t(lang, 'adhkarSummary').replace('{count}', items.length).replace('{total}', totalCount).replace('{mins}', mins)}</p>
           <p className="font-urdu text-base mt-3" dir="rtl">اللہ قبول فرمائے۔ آمین</p>
-          <button onClick={shareSummary} className="mt-5 px-5 py-2.5 rounded-full bg-gold text-black text-sm font-bold inline-flex items-center gap-1.5"><Share2 size={15} /> Share {shareState && `· ${shareState}`}</button>
+          <button onClick={shareSummary} className="mt-5 px-5 py-2.5 rounded-full bg-gold text-black text-sm font-bold inline-flex items-center gap-1.5"><Share2 size={15} /> {t(lang, 'share')} {shareState && `· ${shareState}`}</button>
         </div>
       </div>
     )
@@ -97,15 +98,15 @@ export default function AdhkarRunner({ set, routines, onRoutineChange, onBack, l
   return (
     <div className="max-w-2xl mx-auto px-4 py-4 pb-28">
       <div className="flex items-center justify-between">
-        <button onClick={onBack} className="inline-flex items-center gap-1 text-sm"><ArrowLeft size={17} /> {lang === 'ur' ? 'واپس' : 'Back'}</button>
-        <span className="text-xs font-bold opacity-80">{index + 1} of {items.length} · {doneCount} done</span>
+        <button onClick={onBack} className="inline-flex items-center gap-1 text-sm"><ArrowLeft size={17} /> {t(lang, 'back')}</button>
+        <span className="text-xs font-bold opacity-80">{index + 1} {t(lang, 'ofWord')} {items.length} · {doneCount} {t(lang, 'doneWord')}</span>
       </div>
       <h2 className="text-lg font-extrabold mt-2">{set.titleEn} <span className="font-urdu text-base font-semibold" dir="rtl">{set.title}</span></h2>
       <div className="h-2 rounded-full bg-black/25 mt-2 overflow-hidden"><div className="h-full bg-gold transition-all" style={{ width: `${Math.round(((index) / items.length) * 100)}%` }} /></div>
 
       <div className="flex items-center justify-between mt-3 text-xs">
         <button onClick={() => setAutoAdvance(!autoAdvance)} className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full border ${autoAdvance ? 'bg-gold text-black border-gold font-bold' : 'border-gold/30 opacity-70'}`} aria-pressed={autoAdvance}>
-          {autoAdvance ? <Play size={12} /> : <Pause size={12} />} Auto-advance {autoAdvance ? 'On' : 'Off'}
+          {autoAdvance ? <Play size={12} /> : <Pause size={12} />} {t(lang, 'autoAdvance')} {autoAdvance ? t(lang, 'on') : t(lang, 'off')}
         </button>
         <div className="flex items-center gap-1">
           <button onClick={() => goTo(index - 1)} disabled={index === 0} className="p-2 rounded-full border border-gold/30 disabled:opacity-30" aria-label="Previous dhikr"><ChevronLeft size={15} /></button>
@@ -115,7 +116,7 @@ export default function AdhkarRunner({ set, routines, onRoutineChange, onBack, l
 
       {countdown !== null && (
         <button onClick={pauseCountdown} className="w-full mt-3 py-2.5 rounded-2xl bg-gold/15 border border-gold/40 text-gold text-sm font-bold">
-          Next in {countdown.toFixed(1)}s… tap to pause
+          {t(lang, 'nextIn').replace('{s}', countdown.toFixed(1))}
         </button>
       )}
 

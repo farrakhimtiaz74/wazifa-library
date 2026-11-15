@@ -28,7 +28,7 @@ export default function SurahView({ lang = 'en', onBack }) {
   function listen(surah) {
     if (speaking) { stopSpeaking(); return }
     const synth = window.speechSynthesis
-    if (!synth) { showToast('No Arabic voice on this device'); return }
+    if (!synth) { showToast(t(lang, 'noArabicVoice')); return }
     const queue = String(surah.arabic || '').split('۝').map((s) => s.trim()).filter(Boolean)
     chunksRef.current = queue
     const voices = synth.getVoices()
@@ -48,7 +48,7 @@ export default function SurahView({ lang = 'en', onBack }) {
     speakNext()
     setTimeout(() => {
       const vs = synth.getVoices()
-      if (!vs.some((v) => /^ar/i.test(v.lang))) showToast('No Arabic voice on this device — using default voice')
+      if (!vs.some((v) => /^ar/i.test(v.lang))) showToast(t(lang, 'noArabicVoiceDefault'))
     }, 600)
   }
 
@@ -69,8 +69,8 @@ export default function SurahView({ lang = 'en', onBack }) {
           </button>
         </div>
         {toast && <p className="text-right text-[11px] text-amber-400 font-bold mt-0.5">{toast}</p>}
-        <h2 className="text-xl font-extrabold mt-3">{selected.number}. Surah {selected.name} <span className="font-arabic text-lg" dir="rtl">سورة {selected.arabicName}</span></h2>
-        <p className="text-[11px] opacity-70 mt-1">{selected.ayahs} {t(lang, 'ayahs')} · Juz Amma (30)</p>
+        <h2 className="text-xl font-extrabold mt-3">{selected.number}. {t(lang, 'surahWord')} {selected.name} <span className="font-arabic text-lg" dir="rtl">سورة {selected.arabicName}</span></h2>
+        <p className="text-[11px] opacity-70 mt-1">{selected.ayahs} {t(lang, 'ayahs')} · {t(lang, 'juzAmmaPart')}</p>
         <div className="rounded-3xl border border-gold/25 p-5 mt-4 bg-white/5">
           <p className="font-arabic text-center text-2xl" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</p>
           <p className="font-arabic text-center mt-4" dir="rtl" style={{ fontSize: 28 }}>{selected.arabic}</p>
@@ -101,7 +101,7 @@ export default function SurahView({ lang = 'en', onBack }) {
           <button key={s.number} onClick={() => setSelected(s)} className="w-full flex items-center gap-3 rounded-2xl border border-gold/20 p-3.5 bg-white/5 text-left active:scale-[0.99]">
             <span className="w-9 h-9 rounded-xl bg-gold/15 border border-gold/30 grid place-items-center text-xs font-extrabold text-gold shrink-0">{s.number}</span>
             <span className="flex-1 min-w-0">
-              <span className="block font-bold text-sm truncate">Surah {s.name}</span>
+              <span className="block font-bold text-sm truncate">{t(lang, 'surahWord')} {s.name}</span>
               <span className="block text-[11px] opacity-60">{s.ayahs} {t(lang, 'ayahs')}</span>
             </span>
             <span className="font-arabic text-xl shrink-0" dir="rtl">{s.arabicName}</span>

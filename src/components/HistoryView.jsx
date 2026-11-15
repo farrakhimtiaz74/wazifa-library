@@ -1,15 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, Flame, Hash, Trophy, CalendarCheck } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Flame, Hash, Infinity as InfinityIcon, Trophy, CalendarCheck } from 'lucide-react'
 import { db, getSetting, todayLocal } from '../lib/db'
 import { t } from '../lib/i18n'
+import { getAllPrayerLogs, isFullDay, prayerStreak } from '../lib/prayerLog'
 
 function monthKey(y, m) { return `${y}-${String(m + 1).padStart(2, '0')}` }
 
+// D3: History is the single Stats home — it also carries the lifetime totals
+// (sum of every Wazifa's lifetime_count) that used to surface separately.
 export default function HistoryView({ streak = 0, lang = 'en' }) {
   const now = new Date()
   const [cursor, setCursor] = useState({ y: now.getFullYear(), m: now.getMonth() })
   const [history, setHistory] = useState({})
   const [totalTaps, setTotalTaps] = useState(0)
+  const [lifetimeTotal, setLifetimeTotal] = useState(0)
+  const [prayerLogs, setPrayerLogs] = useState([])
 
   useEffect(() => {
     ;(async () => {
@@ -17,6 +22,9 @@ export default function HistoryView({ streak = 0, lang = 'en' }) {
       const map = {}; rows.forEach((r) => { map[r.date] = r })
       setHistory(map)
       setTotalTaps(await getSetting('total_taps', 0))
+      const routines = await db.routines.toArray()
+      setLifetimeTotal(routines.reduce((s, r) => s + (r.lifetime_count || 0), 0))
+      setPrayerLogs(await getAllPrayerLogs())
     })()
   }, [])
 
@@ -68,6 +76,14 @@ export default function HistoryView({ streak = 0, lang = 'en' }) {
         <div className={statCls}><Trophy className="mx-auto text-gold" size={20} /><p className="text-xl font-extrabold mt-1">{longest}</p><p className="text-[11px] opacity-70">{t(lang, 'longestStreak')}</p></div>
         <div className={statCls}><Hash className="mx-auto text-gold" size={20} /><p className="text-xl font-extrabold mt-1">{totalTaps.toLocaleString()}</p><p className="text-[11px] opacity-70">{t(lang, 'totalDhikr')}</p></div>
         <div className={statCls}><CalendarCheck className="mx-auto text-gold" size={20} /><p className="text-xl font-extrabold mt-1">{weekCompletions}</p><p className="text-[11px] opacity-70">{t(lang, 'thisWeek')}</p></div>
+        <div className={`${statCls} col-span-2`}><InfinityIcon className="mx-auto text-gold" size={20} /><p className="text-xl font-extrabold mt-1">{lifetimeTotal.toLocaleString()}</p><p className="text-[11px] opacity-70">{t(lang, 'lifetimeTotalLabel')}</p></div>
+      </div>
+
+      {/* Item 20: prayer log summary — full 5-prayer days + current streak. */}
+      <h3 className={`text-base font-extrabold mt-5 ${lang === 'ur' ? 'font-urdu' : ''}`}>{t(lang, 'prayerHistoryTitle')}</h3>
+      <div className="grid grid-cols-2 gap-2 mt-2">
+        <div className={statCls}><Flame className="mx-auto text-gold" size={20} /><p className="text-xl font-extrabold mt-1">{prayerStreak(prayerLogs, todayLocal())}</p><p className="text-[11px] opacity-70">{t(lang, 'prayerStreakLabel')}</p></div>
+        <div className={statCls}><CalendarCheck className="mx-auto text-gold" size={20} /><p className="text-xl font-extrabold mt-1">{prayerLogs.filter(isFullDay).length}</p><p className="text-[11px] opacity-70">{t(lang, 'fullDaysLabel')}</p></div>
       </div>
 
       <div className="rounded-3xl border border-gold/25 p-4 mt-4 bg-white/5">
@@ -76,8 +92,8 @@ export default function HistoryView({ streak = 0, lang = 'en' }) {
           <p className="font-bold text-sm">{monthName}</p>
           <button onClick={() => shift(1)} className="p-2 rounded-full border border-gold/30" aria-label="Next month"><ChevronRight size={16} /></button>
         </div>
-        <div className="grid grid-cols-7 gap-1 mt-3 text-center text-[10px] opacity-60 font-bold">
-          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => <span key={d}>{d}</span>)}
+        <div className={`grid grid-cols-7 gap-1 mt-3 text-center text-[10px] opacity-60 font-bold ${lang === 'ur' ? 'font-urdu' : ''}`}>
+          {(t(lang, 'weekdays') || []).map((d) => <span key={d}>{d}</span>)}
         </div>
         <div className="grid grid-cols-7 gap-1 mt-1">
           {cells.map((d, i) => {
@@ -90,7 +106,7 @@ export default function HistoryView({ streak = 0, lang = 'en' }) {
                 ? 'bg-gold/25 text-gold font-bold'
                 : 'opacity-70'
             return (
-              <span key={key} title={h ? `${h.completedCount}/${h.totalCount} completed · ${h.totalTaps || 0} taps` : 'No record'}
+              <span key={key} title={h ? `${h.completedCount}/${h.totalCount} ${t(lang, 'completedWord')} · ${h.totalTaps || 0} ${t(lang, 'tapsLabel')}` : t(lang, 'noRecord')}
                 className={`relative aspect-square grid place-items-center rounded-lg text-xs ${cls} ${key === today ? 'ring-2 ring-gold' : ''}`}>
                 {d}
                 {h?.allComplete && <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-black/60" />}
@@ -98,7 +114,7 @@ export default function HistoryView({ streak = 0, lang = 'en' }) {
             )
           })}
         </div>
-        <p className="text-[11px] opacity-60 mt-3">Gold = full routine completed · Faded gold = partial day · Ring = today</p>
+        <p className={`text-[11px] opacity-60 mt-3 ${lang === 'ur' ? 'font-urdu' : ''}`}>{t(lang, 'historyLegend')}</p>
       </div>
     </div>
   )

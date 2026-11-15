@@ -50,7 +50,7 @@ export default function QiblaCompass({ lang = 'en', onBack }) {
     <div className="max-w-2xl mx-auto px-4 py-4 pb-28">
       <button onClick={onBack} className="inline-flex items-center gap-1 text-sm"><ArrowLeft size={17} /> {t(lang, 'back')}</button>
       <h2 className={`text-xl font-extrabold mt-3 inline-flex items-center gap-2 ${lang === 'ur' ? 'font-urdu' : ''}`}><Compass className="text-gold" /> {t(lang, 'qiblaTitle')}</h2>
-      <p className="text-xs opacity-70 mt-1">{loc.name} · {t(lang, 'distanceToMakkah')}: {distance.toLocaleString()} km</p>
+      <p className="text-xs opacity-70 mt-1">{loc.name} · {t(lang, 'distanceToMakkah')}: {distance.toLocaleString()} {t(lang, 'km')}</p>
 
       <div className="rounded-3xl border border-gold/25 p-5 mt-4 bg-white/5 text-center">
         <p className="text-[11px] uppercase tracking-widest opacity-70 font-bold">{t(lang, 'qibla')}</p>
