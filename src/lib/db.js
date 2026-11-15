@@ -17,6 +17,18 @@ db.version(2).stores({
   history: 'date'
 })
 
+db.version(3).stores({
+  routines: 'wazifa_id, is_bookmarked, updated_at',
+  customWazaif: 'id, category, updated_at',
+  settings: 'key',
+  syncQueue: '++id, type, created_at',
+  history: 'date'
+}).upgrade(async (tx) => {
+  await tx.table('routines').toCollection().modify((r) => {
+    if (typeof r.lifetime_count !== 'number') r.lifetime_count = r.current_count || 0
+  })
+})
+
 export async function getSetting(key, fallback) {
   const row = await db.settings.get(key)
   return row ? row.value : fallback
