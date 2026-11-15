@@ -24,7 +24,7 @@ export default function AdhkarRunner({ set, routines, onRoutineChange, onBack, l
     english_translation: item.english_translation,
     urdu_translation: item.urdu_translation,
     target_count: item.count,
-    recommended_time: set.id === 'morning' ? 'Morning' : 'Evening',
+    recommended_time: set.timeLabel || (set.id === 'morning' ? 'Morning' : set.id === 'evening' ? 'Evening' : 'Any Time'),
     reference: item.reference || '',
     instructions: '',
     keywords: []
