@@ -23,6 +23,11 @@ export default defineConfig(({ mode }) => ({
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        ],
+        shortcuts: [
+          { name: 'Free Tasbih', short_name: 'Tasbih', url: './?open=tasbih', icons: [{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+          { name: 'Morning Adhkar', short_name: 'Morning', url: './?open=morning', icons: [{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' }] },
+          { name: 'Evening Adhkar', short_name: 'Evening', url: './?open=evening', icons: [{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' }] }
         ]
       },
       workbox: {
