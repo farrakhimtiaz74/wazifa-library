@@ -33,6 +33,7 @@ export default function WazifaCard({ wazifa, routine, onOpen, onToggleBookmark }
       <div className="flex items-center gap-3 mt-3 text-[11px] opacity-70">
         <span className="inline-flex items-center gap-1"><Clock size={12} />{wazifa.recommended_time}</span>
         <span>Target {wazifa.target_count}x</span>
+        {routine?.lifetime_count > 0 && <span className="text-gold font-semibold">Lifetime: {routine.lifetime_count.toLocaleString()}</span>}
       </div>
       {routine?.is_bookmarked && <div className="mt-2 h-1.5 rounded-full bg-black/20 overflow-hidden"><div className="h-full bg-gold" style={{ width: `${pct}%` }} /></div>}
     </article>
