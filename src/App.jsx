@@ -37,25 +37,43 @@ export default function App() {
     setStreak(await getSetting('daily_streak', 0))
   }
 
+  async function ensureDailyReset() {
+    const today = todayLocal()
+    const lastReset = await getSetting('last_global_reset', null)
+    if (lastReset === today) return false
+    const rows = await db.routines.toArray()
+    const bookmarked = rows.filter((r) => r.is_bookmarked)
+    const allDone = bookmarked.length > 0 && bookmarked.every((r) => r.completed_today)
+    const countedDate = await getSetting('streak_counted_date', null)
+    if (lastReset && allDone && countedDate !== lastReset) {
+      const s = (await getSetting('daily_streak', 0)) + 1
+      await setSetting('daily_streak', s)
+      await setSetting('streak_counted_date', lastReset)
+    }
+    for (const r of rows) await db.routines.put({ ...r, current_count: 0, completed_today: false, last_reset_date: today, updated_at: new Date().toISOString() })
+    await setSetting('last_global_reset', today)
+    return true
+  }
+
   useEffect(() => {
     ;(async () => {
       const prefs = await getSetting('preferences', {})
       const t = prefs.theme || 'dark'; setTheme(t); document.documentElement.classList.toggle('dark', t === 'dark')
-      const today = todayLocal()
-      const lastReset = await getSetting('last_global_reset', null)
-      const rows = await db.routines.toArray()
-      if (lastReset !== today) {
-        const bookmarked = rows.filter((r) => r.is_bookmarked)
-        const allDone = bookmarked.length > 0 && bookmarked.every((r) => r.completed_today)
-        if (lastReset && allDone) {
-          const s = (await getSetting('daily_streak', 0)) + 1
-          await setSetting('daily_streak', s)
-        }
-        for (const r of rows) await db.routines.put({ ...r, current_count: 0, completed_today: false, last_reset_date: today, updated_at: new Date().toISOString() })
-        await setSetting('last_global_reset', today)
-      }
+      await ensureDailyReset()
       await refresh(); syncNow()
     })()
+  }, [])
+
+  useEffect(() => {
+    let running = false
+    async function onReturn() {
+      if (document.visibilityState !== 'visible' || running) return
+      running = true
+      try { if (await ensureDailyReset()) await refresh() } finally { running = false }
+    }
+    document.addEventListener('visibilitychange', onReturn)
+    window.addEventListener('focus', onReturn)
+    return () => { document.removeEventListener('visibilitychange', onReturn); window.removeEventListener('focus', onReturn) }
   }, [])
 
   useEffect(() => {
@@ -94,7 +112,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-cream text-[#12211c] dark:bg-deep dark:text-[#f5f1e6]">
-      <Header theme={theme} onToggleTheme={toggleTheme} onOpenSettings={() => setSettingsOpen(true)} />
+      <Header theme={theme} onToggleTheme={toggleTheme} onOpenSettings={() => setSettingsOpen(true)} streak={streak} />
       {view === 'reader' && selected ? (
         <WazifaReader wazifa={selected} routine={routines[selected.id]} onBack={() => setView('home')} onToggleBookmark={toggleBookmark} onRoutineChange={(row) => setRoutines((m) => ({ ...m, [row.wazifa_id]: row }))} />
       ) : view === 'routine' ? (
