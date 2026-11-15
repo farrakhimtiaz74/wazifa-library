@@ -122,18 +122,6 @@ export const wazifaData = [
     keywords: ['health', 'shifa', 'healing', 'sick', 'illness', 'pain', 'cure', 'disease', 'hospital']
   },
   {
-    id: 'rabbana-hab-lana',
-    title: 'Rabbana Hab Lana — Family & Spouse',
-    category: 'Marriage & Family',
-    arabic: 'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا',
-    transliteration: "Rabbana hab lana min azwajina wa dhurriyyatina qurrata a'yunin waj'alna lil-muttaqina imama.",
-    english_translation: 'Our Lord, grant us from among our spouses and offspring comfort to our eyes, and make us leaders for the righteous.',
-    urdu_translation: 'اے ہمارے رب! ہمیں ہمارے شریکِ حیات اور اولاد کی طرف سے آنکھوں کی ٹھنڈک عطا فرما اور ہمیں پرہیزگاروں کا پیشوا بنا۔',
-    target_count: 33, recommended_time: 'After Every Prayer', reference: 'Quran 25:74',
-    instructions: 'Recite after every prayer for a righteous spouse, happy marriage and pious children. Those seeking marriage should recite consistently with full trust in Allah.',
-    keywords: ['marriage', 'spouse', 'family', 'children', 'nikah', 'love', 'home', 'rishta']
-  },
-  {
     id: 'rizq-dua-ilman',
     title: "Dua for Rizq, Knowledge & Accepted Deeds",
     category: 'Rizq & Wealth',
@@ -362,18 +350,6 @@ export const wazifaData = [
     keywords: ['shifa', 'healing', 'sick', 'illness', 'hospital', 'visit', 'cure', 'health', 'patient']
   },
   {
-    id: 'rabbana-atina-fid-dunya',
-    title: 'Rabbana Atina — Good in Both Worlds',
-    category: 'Rizq & Wealth',
-    arabic: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ',
-    transliteration: "Rabbana atina fid-dunya hasanah, wa fil-akhirati hasanah, wa qina 'adhaban-nar.",
-    english_translation: 'Our Lord, give us good in this world and good in the Hereafter, and shield us from the punishment of the Fire.',
-    urdu_translation: 'اے ہمارے رب! ہمیں دنیا میں بھی بھلائی عطا فرما اور آخرت میں بھی بھلائی عطا فرما، اور ہمیں آگ کے عذاب سے بچا۔',
-    target_count: 33, recommended_time: 'After Every Prayer, In Tawaf', reference: 'Quran 2:201 — Sahih al-Bukhari 4522, Sahih Muslim 2690',
-    instructions: 'This was the dua the Prophet ﷺ made most frequently. It covers everything: health, rizq, family, safety in this world and success in the next. Make it a daily habit.',
-    keywords: ['rizq', 'dunya', 'akhirah', 'good', 'comprehensive', 'dua', 'wealth', 'success', 'protection']
-  },
-  {
     id: 'dua-hamm-wal-hazan',
     title: 'Dua Against Anxiety, Laziness & Debt',
     category: 'Peace & Anxiety',
@@ -384,18 +360,6 @@ export const wazifaData = [
     target_count: 33, recommended_time: 'Morning & Evening', reference: 'Sahih al-Bukhari 6369',
     instructions: 'The Prophet ﷺ sought refuge from these eight things daily. Recite morning and evening, especially when anxiety, laziness or debt weigh on you.',
     keywords: ['anxiety', 'grief', 'debt', 'qarz', 'laziness', 'worry', 'stress', 'sadness', 'fear', 'overwhelmed']
-  },
-  {
-    id: 'rabbana-zalamna-anfusana',
-    title: 'Rabbana Zalamna — Dua of Adam (AS)',
-    category: 'Forgiveness & Istighfar',
-    arabic: 'رَبَّنَا ظَلَمْنَا أَنْفُسَنَا وَإِنْ لَمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ',
-    transliteration: "Rabbana zalamna anfusana wa illam taghfir lana wa tarhamna lanakunanna minal-khasirin.",
-    english_translation: 'Our Lord, we have wronged ourselves, and if You do not forgive us and have mercy upon us, we will surely be among the losers.',
-    urdu_translation: 'اے ہمارے رب! ہم نے اپنی جانوں پر ظلم کیا، اور اگر تو نے ہمیں نہ بخشا اور ہم پر رحم نہ فرمایا تو ہم ضرور نقصان اٹھانے والوں میں سے ہو جائیں گے۔',
-    target_count: 100, recommended_time: 'After Sin, In Sujood, Any Time', reference: 'Quran 7:23',
-    instructions: 'These are the words Adam (AS) received from his Lord, and Allah turned to him in forgiveness. Recite whenever you slip into sin, with sincere regret and a firm resolve not to return.',
-    keywords: ['forgiveness', 'istighfar', 'repentance', 'tawbah', 'sin', 'adam', 'regret', 'mercy', 'guilt']
   },
   {
     id: 'rabbi-hab-li-hukma',
@@ -492,18 +456,6 @@ export const wazifaData = [
     target_count: 100, recommended_time: 'After Every Prayer', reference: 'Quran 21:89',
     instructions: 'Dua of Zakariya (AS), who asked Allah in old age — Allah answered him and granted him Yahya (AS). Recite consistently if you are seeking marriage or praying for children.',
     keywords: ['marriage', 'children', 'spouse', 'nikah', 'offspring', 'aulaad', 'zakariya', 'alone', 'family']
-  },
-  {
-    id: 'rabbanaghfir-li-waliwalidayya',
-    title: 'Rabbanaghfir Li Waliwalidayya — Family Forgiveness',
-    category: 'Marriage & Family',
-    arabic: 'رَبَّنَا اغْفِرْ لِي وَلِوَالِدَيَّ وَلِلْمُؤْمِنِينَ يَوْمَ يَقُومُ الْحِسَابُ',
-    transliteration: "Rabbanaghfir li wa liwalidayya wa lil-mu'minina yawma yaqumul-hisab.",
-    english_translation: 'Our Lord, forgive me and my parents and the believers on the Day when the reckoning will be established.',
-    urdu_translation: 'اے ہمارے رب! مجھے اور میرے والدین کو اور سب مومنوں کو اس دن بخش دے جس دن حساب قائم ہوگا۔',
-    target_count: 33, recommended_time: 'After Every Prayer', reference: 'Quran 14:41',
-    instructions: 'Dua of Ibrahim (AS) for himself, his parents and all believers. Recite daily to bring mercy, forgiveness and peace into your home and family.',
-    keywords: ['parents', 'family', 'home', 'forgiveness', 'walidain', 'peace', 'household', 'ibrahim']
   },
   {
     id: 'dua-for-pain',
@@ -864,5 +816,41 @@ export const wazifaData = [
     target_count: 1, recommended_time: 'Friday', reference: 'Quran 18 — Sahih Muslim 809',
     instructions: 'Whoever recites Surah Al-Kahf on Friday will have a light between the two Fridays (Al-Hakim). Only the opening ayat are shown here as a start — recite the complete surah (110 ayat) from the Quran or a mushaf app. The last 10 ayat protect from the Dajjal (Sahih Muslim).',
     keywords: ['friday', 'kahf', 'jumuah', 'light', 'dajjal', 'quran', 'surah', 'weekly']
+  },
+  {
+    id: 'allahummaghfir-li-warhamni-warzuqni',
+    title: 'Allahummaghfir Li Warhamni — Guidance, Health & Rizq',
+    category: 'Rizq & Wealth',
+    arabic: 'اللَّهُمَّ اغْفِرْ لِي وَارْحَمْنِي وَاهْدِنِي وَعَافِنِي وَارْزُقْنِي',
+    transliteration: "Allahummaghfir li, warhamni, wahdini, wa 'afini, warzuqni.",
+    english_translation: 'O Allah, forgive me, have mercy on me, guide me, grant me health and well-being, and provide for me.',
+    urdu_translation: 'اے اللہ! مجھے بخش دے، مجھ پر رحم فرما، مجھے ہدایت دے، مجھے عافیت دے اور مجھے رزق عطا فرما۔',
+    target_count: 33, recommended_time: 'Any Time, Especially When Seeking Work', reference: 'Sahih Muslim 2697',
+    instructions: "A man came to the Prophet ﷺ asking how to ask Allah; he taught him these words, saying: these gather for you your worldly life and your Hereafter. Recite daily for forgiveness, guidance, health and rizq — a complete dua for anyone seeking work and provision.",
+    keywords: ['job', 'naukri', 'rizq', 'work', 'guidance', 'health', 'forgiveness', 'provision', 'rozgar']
+  },
+  {
+    id: 'audhu-bika-minal-maatham-wal-maghram',
+    title: 'A\'udhu Bika Minal-Ma\'tham Wal-Maghram — Refuge from Debt',
+    category: 'Rizq & Wealth',
+    arabic: 'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْمَأْثَمِ وَالْمَغْرَمِ',
+    transliteration: "Allahumma inni a'udhu bika minal-ma'thami wal-maghram.",
+    english_translation: 'O Allah, I seek refuge in You from sin and from debt.',
+    urdu_translation: 'اے اللہ! میں گناہ اور قرض سے تیری پناہ مانگتا ہوں۔',
+    target_count: 33, recommended_time: 'After Every Prayer', reference: 'Sahih al-Bukhari 2397, Sahih Muslim 589',
+    instructions: "The Prophet ﷺ sought refuge from debt so often that a man asked him about it; he replied: when a man gets into debt, he speaks and lies, and promises and breaks his promise. Recite after every prayer to stay free of qarz.",
+    keywords: ['debt', 'qarz', 'loan', 'maghram', 'sin', 'money', 'rizq', 'protection']
+  },
+  {
+    id: 'dua-return-from-travel',
+    title: 'Dua When Returning from Travel',
+    category: 'Protection & Hifazat',
+    arabic: 'آيِبُونَ تَائِبُونَ عَابِدُونَ لِرَبِّنَا حَامِدُونَ',
+    transliteration: "Ayibuna, ta'ibuna, 'abiduna, li-Rabbina hamidun.",
+    english_translation: 'We return, we repent, we worship, and we praise our Lord.',
+    urdu_translation: 'ہم واپس آنے والے ہیں، توبہ کرنے والے ہیں، عبادت کرنے والے ہیں، اور اپنے رب کی تعریف کرنے والے ہیں۔',
+    target_count: 1, recommended_time: 'When Returning from a Journey', reference: 'Sahih Muslim 1342',
+    instructions: 'The Prophet ﷺ would add these words to the travel dua when returning from a journey. Say them as you head home, with gratitude for a safe return.',
+    keywords: ['travel', 'safar', 'return', 'journey', 'home', 'safety', 'gratitude']
   }
 ]
