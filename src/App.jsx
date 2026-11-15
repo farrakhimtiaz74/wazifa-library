@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Fuse from 'fuse.js'
-import { BarChart3, Bell, BookOpen, Home, ListChecks, Moon, Settings, Sparkles, Sun, X } from 'lucide-react'
+import { BarChart3, Bell, BookOpen, Check, Home, ListChecks, Moon, ScrollText, Settings, Share2, Sparkles, Sun, X } from 'lucide-react'
 import { wazifaData } from './data/wazifaData'
 import { adhkarSets } from './data/adhkarSets'
+import { rabbanaSet } from './data/rabbanaSets'
+import { dailyQuotes } from './data/dailyQuotes'
 import { db, getSetting, recordHistorySnapshot, setSetting, todayLocal, queueSync } from './lib/db'
 import { syncNow } from './lib/sync'
 import { loadLang, saveLang, t } from './lib/i18n'
@@ -18,6 +20,10 @@ import AdhkarRunner from './components/AdhkarRunner'
 import CustomWazifaModal from './components/CustomWazifaModal'
 import SettingsDrawer from './components/SettingsDrawer'
 import InstallPrompt from './components/InstallPrompt'
+import PrayerStrip from './components/PrayerStrip'
+import QiblaCompass from './components/QiblaCompass'
+import SurahView from './components/SurahView'
+import RoutineRing from './components/RoutineRing'
 
 const FREE_TASBIH = {
   id: 'free-tasbih',
@@ -50,6 +56,7 @@ export default function App() {
   const [customOpen, setCustomOpen] = useState(false)
   const [editingCustom, setEditingCustom] = useState(null)
   const [reminderBanner, setReminderBanner] = useState(false)
+  const [quoteShared, setQuoteShared] = useState(false)
   const routinesRef = useRef({})
   routinesRef.current = routines
 
@@ -61,6 +68,17 @@ export default function App() {
     const doy = Math.floor((now - start) / 86400000)
     return wazifaData[doy % wazifaData.length]
   }, [])
+
+  const quoteOfDay = useMemo(() => {
+    const now = new Date()
+    const start = new Date(now.getFullYear(), 0, 0)
+    const doy = Math.floor((now - start) / 86400000)
+    return dailyQuotes[doy % dailyQuotes.length]
+  }, [])
+
+  const isFriday = new Date().getDay() === 5
+  const kahfEntry = useMemo(() => wazifaData.find((w) => w.id === 'surah-al-kahf'), [])
+  const duroodEntry = useMemo(() => wazifaData.find((w) => w.id === 'durood-e-ibrahimi'), [])
 
   async function refresh() {
     const rows = await db.routines.toArray()
@@ -98,6 +116,11 @@ export default function App() {
       const t2 = prefs.theme || 'dark'; setTheme(t2); document.documentElement.classList.toggle('dark', t2 === 'dark')
       await ensureDailyReset()
       await refresh(); syncNow()
+      try {
+        const open = new URLSearchParams(window.location.search).get('open')
+        if (open === 'tasbih') { setBackView('home'); setSelected(FREE_TASBIH); setView('reader') }
+        else if (open === 'morning' || open === 'evening' || open === 'rabbana') { setAdhkarId(open); setView('adhkar') }
+      } catch { /* deep link is optional */ }
     })()
   }, [])
 
@@ -164,8 +187,26 @@ export default function App() {
 
   async function toggleBookmark(w) {
     const existing = routines[w.id]
-    const row = { wazifa_id: w.id, is_bookmarked: !(existing?.is_bookmarked), current_count: existing?.current_count || 0, target_count: existing?.target_count || w.target_count, completed_today: existing?.completed_today || false, rounds_today: existing?.rounds_today || 0, last_reset_date: todayLocal(), updated_at: new Date().toISOString() }
+    const row = { wazifa_id: w.id, is_bookmarked: !(existing?.is_bookmarked), current_count: existing?.current_count || 0, target_count: existing?.target_count || w.target_count, completed_today: existing?.completed_today || false, rounds_today: existing?.rounds_today || 0, lifetime_count: existing?.lifetime_count || 0, last_reset_date: todayLocal(), updated_at: new Date().toISOString() }
     await db.routines.put(row); await queueSync('routine', row); setRoutines((m) => ({ ...m, [w.id]: row })); syncNow()
+  }
+
+  async function fridayDuroodGoal() {
+    if (!duroodEntry) return
+    const existing = routines[duroodEntry.id]
+    const cur = existing?.current_count || 0
+    const row = { wazifa_id: duroodEntry.id, is_bookmarked: existing?.is_bookmarked || false, current_count: cur, target_count: 1000, completed_today: cur >= 1000, rounds_today: existing?.rounds_today || 0, lifetime_count: existing?.lifetime_count || 0, last_reset_date: todayLocal(), updated_at: new Date().toISOString() }
+    await db.routines.put(row); await queueSync('routine', row); setRoutines((m) => ({ ...m, [duroodEntry.id]: row })); syncNow()
+    openReader(duroodEntry, 'home')
+  }
+
+  async function shareQuote() {
+    const q = quoteOfDay
+    const text = [q.arabic, q.english, q.urdu, `— ${q.reference}`, '', '— via Wazifa Library', 'https://farrakhimtiaz74.github.io/wazifa-library/'].filter(Boolean).join('\n')
+    if (navigator.share) {
+      try { await navigator.share({ title: t(lang, 'dailyQuote'), text }); return } catch (err) { if (err && err.name === 'AbortError') return }
+    }
+    try { await navigator.clipboard.writeText(text); setQuoteShared(true); setTimeout(() => setQuoteShared(false), 2000) } catch { /* clipboard unavailable */ }
   }
 
   function handleRoutineChange(row) {
@@ -217,7 +258,11 @@ export default function App() {
       {view === 'reader' && selected ? (
         <WazifaReader wazifa={selected} routine={routines[selected.id]} onBack={() => setView(backView === 'reader' ? 'home' : backView)} onToggleBookmark={toggleBookmark} onRoutineChange={handleRoutineChange} lang={lang} freeMode={selected.id === 'free-tasbih'} />
       ) : view === 'adhkar' ? (
-        <AdhkarRunner set={adhkarSets[adhkarId]} routines={routines} onRoutineChange={handleRoutineChange} onBack={() => setView('home')} lang={lang} />
+        <AdhkarRunner set={adhkarId === 'rabbana' ? rabbanaSet : adhkarSets[adhkarId]} routines={routines} onRoutineChange={handleRoutineChange} onBack={() => setView('home')} lang={lang} />
+      ) : view === 'qibla' ? (
+        <QiblaCompass lang={lang} onBack={() => setView('home')} />
+      ) : view === 'juzamma' ? (
+        <SurahView lang={lang} onBack={() => setView('home')} />
       ) : view === 'routine' ? (
         <RoutineView items={routineItems} streak={streak} onOpen={(w) => openReader(w, 'routine')} onAddCustom={() => { setEditingCustom(null); setCustomOpen(true) }} onOpenAdhkar={openAdhkar} onOpenHistory={() => setView('history')} onRoutineChange={handleRoutineChange} lang={lang} />
       ) : view === 'names' ? (
@@ -227,9 +272,38 @@ export default function App() {
       ) : (
         <main className="max-w-2xl mx-auto px-4 py-4 pb-28 space-y-4">
           <div>
-            <h2 className={`text-lg font-extrabold ${lang === 'ur' ? 'font-urdu' : ''}`}>{t(lang, 'greeting')}</h2>
+            <h2 className={`text-lg font-extrabold ${lang === 'ur' ? 'font-urdu' : ''}`}>{(() => { const h = new Date().getHours(); return h >= 4 && h < 12 ? t(lang, 'greetingMorning') : (h >= 19 || h < 4) ? t(lang, 'greetingEvening') : t(lang, 'greeting') })()}</h2>
             <p className={`text-xs opacity-70 ${lang === 'ur' ? 'font-urdu' : ''}`}>{t(lang, 'tagline')}</p>
           </div>
+
+          <RoutineRing
+            percent={routineItems.length ? (routineItems.filter((i) => i.routine?.completed_today).length / routineItems.length) * 100 : 0}
+            done={routineItems.filter((i) => i.routine?.completed_today).length}
+            total={routineItems.length}
+            streak={streak}
+            lang={lang}
+            onClick={() => setView('routine')}
+          />
+
+          <PrayerStrip lang={lang} onOpenQibla={() => setView('qibla')} />
+
+          {isFriday && (
+            <div className="rounded-3xl border border-gold/50 bg-gold/15 p-4">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gold uppercase tracking-wider"><Sparkles size={12} /> {t(lang, 'fridayTitle')}</span>
+              <div className="grid grid-cols-1 gap-2 mt-2.5">
+                {kahfEntry && (
+                  <button onClick={() => openReader(kahfEntry, 'home')} className="w-full text-left rounded-2xl bg-black/20 border border-gold/30 p-3 active:scale-[0.99]">
+                    <span className="block font-bold text-sm">{t(lang, 'fridayKahf')}</span>
+                    <span className="block text-[11px] opacity-70 mt-0.5">{kahfEntry.title} · {kahfEntry.reference}</span>
+                  </button>
+                )}
+                <button onClick={fridayDuroodGoal} className="w-full text-left rounded-2xl bg-black/20 border border-gold/30 p-3 active:scale-[0.99]">
+                  <span className="block font-bold text-sm">{t(lang, 'fridayGoal')}</span>
+                  <span className="block text-[11px] opacity-70 mt-0.5">{t(lang, 'fridayGoalSub')}</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           <button onClick={() => openReader(wazifaOfDay, 'home')} className="w-full text-left rounded-3xl border border-gold/40 bg-gold/10 p-4 active:scale-[0.99]">
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gold uppercase tracking-wider"><Sparkles size={12} /> {t(lang, 'wazifaOfDay')}</span>
@@ -237,6 +311,18 @@ export default function App() {
             <span className="font-arabic block text-xl mt-1.5 line-clamp-2" dir="rtl">{wazifaOfDay.arabic}</span>
             <span className="block text-[11px] opacity-70 mt-1.5">{wazifaOfDay.recommended_time} · Target {wazifaOfDay.target_count}x · {wazifaOfDay.reference}</span>
           </button>
+
+          <div className="rounded-3xl border border-gold/25 p-4 bg-white/5">
+            <div className="flex items-center justify-between gap-2">
+              <span className={`inline-flex items-center gap-1 text-[11px] font-bold text-gold uppercase tracking-wider ${lang === 'ur' ? 'font-urdu normal-case tracking-normal text-sm' : ''}`}><ScrollText size={12} /> {t(lang, 'dailyQuote')} · {quoteOfDay.type === 'ayah' ? 'Ayah' : 'Hadith'}</span>
+              <button onClick={shareQuote} className="p-1.5 shrink-0" aria-label={t(lang, 'share')}>{quoteShared ? <Check size={17} className="text-gold" /> : <Share2 size={17} className="opacity-70" />}</button>
+            </div>
+            {quoteOfDay.arabic && <p className="font-arabic text-xl mt-2.5 text-center" dir="rtl">{quoteOfDay.arabic}</p>}
+            <p className="text-sm leading-relaxed mt-2.5">{quoteOfDay.english}</p>
+            <p className="font-urdu text-base mt-2 text-right" dir="rtl">{quoteOfDay.urdu}</p>
+            <p className="text-[11px] opacity-60 mt-2">{quoteOfDay.reference}</p>
+            {quoteShared && <p className="text-[11px] text-gold font-bold mt-1">Copied — ready to paste anywhere</p>}
+          </div>
 
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => openAdhkar('morning')} className="rounded-2xl border border-gold/25 p-3.5 bg-white/5 text-left active:scale-[0.99]">
@@ -258,6 +344,16 @@ export default function App() {
               <Sparkles className="text-gold" size={19} />
               <span className="block font-bold text-sm mt-1.5">{t(lang, 'namesTitle')}</span>
               <span className="block text-[11px] opacity-70 mt-0.5">{t(lang, 'namesSub')}</span>
+            </button>
+            <button onClick={() => openAdhkar('rabbana')} className="rounded-2xl border border-gold/25 p-3.5 bg-white/5 text-left active:scale-[0.99]">
+              <ScrollText className="text-gold" size={19} />
+              <span className="block font-bold text-sm mt-1.5">{rabbanaSet.items.length} Rabbana Duas</span>
+              <span className="block text-[11px] opacity-70 mt-0.5">{t(lang, 'rabbanaSub')}</span>
+            </button>
+            <button onClick={() => setView('juzamma')} className="rounded-2xl border border-gold/25 p-3.5 bg-white/5 text-left active:scale-[0.99]">
+              <BookOpen className="text-gold" size={19} />
+              <span className="block font-bold text-sm mt-1.5">{t(lang, 'juzAmma')}</span>
+              <span className="block text-[11px] opacity-70 mt-0.5">{t(lang, 'juzAmmaSub')}</span>
             </button>
           </div>
 
