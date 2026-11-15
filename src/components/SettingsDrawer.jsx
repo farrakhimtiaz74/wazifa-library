@@ -1,18 +1,88 @@
-import React, { useEffect, useState } from 'react'
-import { X, LogOut } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
+import { X, LogOut, Bell, Download, Upload } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { getSetting, setSetting } from '../lib/db'
+import { db, getSetting, setSetting } from '../lib/db'
 import { isSupabaseConfigured } from '../lib/supabaseClient'
+import { t } from '../lib/i18n'
 
-export default function SettingsDrawer({ open, onClose, theme, onToggleTheme }) {
+export default function SettingsDrawer({ open, onClose, theme, onToggleTheme, lang = 'en', onSetLang, onDataRestored }) {
   const { user, signInWithGoogle, signInWithEmailLink, signInWithPassword, signOut } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [msg, setMsg] = useState('')
-  useEffect(() => { if (open) getSetting('preferences', {}).then((p) => setName(p.display_name || '')) }, [open ])
+  const [reminderOn, setReminderOn] = useState(false)
+  const [reminderTime, setReminderTime] = useState('07:00')
+  const [backupMsg, setBackupMsg] = useState('')
+  const fileRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    getSetting('preferences', {}).then((p) => setName(p.display_name || ''))
+    getSetting('reminder', { enabled: false, time: '07:00' }).then((r) => { setReminderOn(!!r.enabled); setReminderTime(r.time || '07:00') })
+  }, [open ])
+
   if (!open) return null
+
   async function saveName(v) { setName(v); const p = await getSetting('preferences', {}); await setSetting('preferences', { ...p, display_name: v }) }
+
+  async function saveReminder(enabled, time) {
+    setReminderOn(enabled); setReminderTime(time)
+    await setSetting('reminder', { enabled, time })
+    if (enabled && 'Notification' in window && Notification.permission === 'default') {
+      try { await Notification.requestPermission() } catch { /* permission optional */ }
+    }
+    if (enabled && 'Notification' in window && Notification.permission === 'denied') {
+      setMsg('Notifications are blocked in your browser settings — the in-app reminder banner will still show.')
+    }
+  }
+
+  async function exportBackup() {
+    const data = {
+      app: 'wazifa-library',
+      version: 2,
+      exported_at: new Date().toISOString(),
+      routines: await db.routines.toArray(),
+      customWazaif: await db.customWazaif.toArray(),
+      settings: await db.settings.toArray(),
+      history: await db.history.toArray()
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `wazifa-library-backup-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 4000)
+    setBackupMsg('Backup downloaded.')
+  }
+
+  async function importBackup(e) {
+    const file = e.target.files && e.target.files[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const parsed = JSON.parse(await file.text())
+      if (!parsed || parsed.app !== 'wazifa-library' || !Array.isArray(parsed.routines) || !Array.isArray(parsed.customWazaif) || !Array.isArray(parsed.settings)) {
+        throw new Error('shape')
+      }
+      const ok = window.confirm('Import this backup? It will overwrite your current routines, custom Wazaif, settings and history on this device.')
+      if (!ok) return
+      await db.routines.clear(); await db.routines.bulkPut(parsed.routines)
+      await db.customWazaif.clear(); await db.customWazaif.bulkPut(parsed.customWazaif)
+      await db.settings.clear(); await db.settings.bulkPut(parsed.settings)
+      if (Array.isArray(parsed.history)) { await db.history.clear(); await db.history.bulkPut(parsed.history) }
+      for (const r of parsed.routines) await db.syncQueue.add({ type: 'routine', payload: r, created_at: new Date().toISOString() })
+      for (const c of parsed.customWazaif) await db.syncQueue.add({ type: 'custom', payload: c, created_at: new Date().toISOString() })
+      setBackupMsg('Backup restored. Reloading…')
+      onDataRestored && onDataRestored()
+      setTimeout(() => window.location.reload(), 600)
+    } catch {
+      setBackupMsg('That file is not a valid Wazifa Library backup.')
+    }
+  }
+
+  const sectionTitle = 'text-sm font-bold mb-2'
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex justify-end" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm h-full overflow-y-auto bg-[#0a3527] dark:bg-[#0a3527] bg-[#fffdf8] border-l border-gold/30 p-5">
@@ -37,8 +107,37 @@ export default function SettingsDrawer({ open, onClose, theme, onToggleTheme }) 
             {msg && <p className="text-xs text-gold">{msg}</p>}
           </div>
         )}
+
         <div className="mt-6 border-t border-gold/20 pt-4">
-          <p className="text-sm font-bold mb-2">Appearance</p>
+          <p className={sectionTitle}>{t(lang, 'language')}</p>
+          <div className="flex gap-2">
+            <button onClick={() => onSetLang && onSetLang('en')} className={`px-3 py-2 rounded-full border text-xs font-bold ${lang === 'en' ? 'bg-gold text-black border-gold' : 'border-gold/40'}`}>English</button>
+            <button onClick={() => onSetLang && onSetLang('ur')} className={`px-3 py-2 rounded-full border text-xs font-bold font-urdu ${lang === 'ur' ? 'bg-gold text-black border-gold' : 'border-gold/40'}`}>اردو</button>
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-gold/20 pt-4">
+          <p className={`${sectionTitle} inline-flex items-center gap-1.5`}><Bell size={14} /> {t(lang, 'reminderTitle')}</p>
+          <div className="flex items-center gap-2">
+            <button onClick={() => saveReminder(!reminderOn, reminderTime)} className={`px-3 py-2 rounded-full border text-xs font-bold ${reminderOn ? 'bg-gold text-black border-gold' : 'border-gold/40'}`} aria-pressed={reminderOn}>{reminderOn ? 'On' : 'Off'}</button>
+            <input type="time" value={reminderTime} onChange={(e) => saveReminder(reminderOn, e.target.value)} className="rounded-xl border border-gold/25 bg-white/5 px-3 py-2 text-sm" aria-label="Reminder time" />
+          </div>
+          <p className="text-[11px] opacity-60 mt-2">{t(lang, 'reminderHelp')}</p>
+        </div>
+
+        <div className="mt-6 border-t border-gold/20 pt-4">
+          <p className={sectionTitle}>{t(lang, 'backupTitle')}</p>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={exportBackup} className="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-gold text-black text-xs font-bold"><Download size={13} /> {t(lang, 'exportBtn')}</button>
+            <button onClick={() => fileRef.current && fileRef.current.click()} className="inline-flex items-center gap-1 px-3 py-2 rounded-full border border-gold/40 text-xs font-bold"><Upload size={13} /> {t(lang, 'importBtn')}</button>
+            <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={importBackup} />
+          </div>
+          {backupMsg && <p className="text-xs text-gold mt-2">{backupMsg}</p>}
+          <p className="text-[11px] opacity-60 mt-2">Backup includes routines, custom Wazaif, preferences, streak, history and total dhikr count. Keep the file somewhere safe.</p>
+        </div>
+
+        <div className="mt-6 border-t border-gold/20 pt-4">
+          <p className={sectionTitle}>Appearance</p>
           <button onClick={onToggleTheme} className="px-3 py-2 rounded-full border border-gold/40 text-xs font-bold">{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</button>
           <p className="text-[11px] opacity-60 mt-4">Arabic font size and script visibility are adjusted inside each Wazifa reader (A− / A+) and are saved automatically.</p>
         </div>
