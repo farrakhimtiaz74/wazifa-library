@@ -17,7 +17,7 @@ export default function SettingsDrawer({ open, onClose, theme, onToggleTheme }) 
     <div className="fixed inset-0 z-50 bg-black/60 flex justify-end" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-sm h-full overflow-y-auto bg-[#0a3527] dark:bg-[#0a3527] bg-[#fffdf8] border-l border-gold/30 p-5">
         <div className="flex items-center justify-between"><h3 className="font-extrabold">Profile & Settings</h3><button onClick={onClose}><X /></button></div>
-        {!isSupabaseConfigured && <p className="mt-4 text-xs rounded-xl border border-amber-400/40 bg-amber-400/10 p-3">Guest mode: cloud sync is not configured yet (no Supabase keys). Everything works offline and is saved on this device.</p>}
+        {!isSupabaseConfigured && <p className="mt-4 text-xs rounded-xl border border-amber-400/40 bg-amber-400/10 p-3">Guest mode: cloud sync is off. Add Supabase keys to enable sync (set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, e.g. as GitHub repo Secrets, then rebuild). Everything works offline and is saved on this device.</p>}
         {user ? (
           <div className="mt-4 space-y-3">
             <p className="text-sm">Signed in as <b>{user.email}</b></p>
