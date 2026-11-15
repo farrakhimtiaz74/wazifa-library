@@ -8,13 +8,22 @@ A complete, production-ready, mobile-first **Wazifa Library** Progressive Web Ap
 React (Vite) · Tailwind CSS v3 · Lucide Icons · Dexie.js (IndexedDB) · Supabase (Auth + PostgreSQL) · Fuse.js · vite-plugin-pwa
 
 ## Features
-- 46 authentic seeded Wazaif across all categories (Rizq, Shifa, Protection, Marriage & Family, Peace & Anxiety, Istighfar, Daily Adhkar) with references
+- 72 authentic seeded Wazaif across all categories (Rizq, Shifa, Protection, Marriage & Family, Peace & Anxiety, Istighfar, Daily Adhkar) with references, including a **Daily Life Duas** category (25 Hisn al-Muslim duas: leaving/entering home, masjid, eating, waking, market, vehicle, rain, thunder, iftar, adhan, graveyard, sneezing, anger, new moon…) and a Friday Surah Al-Kahf entry
+- Prayer Times on Home (Aladhan API, Karachi method): 5 daily prayers, next-prayer live countdown, Jumu'ah label on Fridays; location via Settings (city presets, default Sargodha, or device geolocation); times cached by date for offline use
+- Qibla compass: bearing + distance to Makkah from your location, live phone-compass dial where the sensor is available (static bearing fallback)
+- Ayah / Hadith of the Day card (30 rotating quotes) with share/copy
+- Friday mode: Surah Al-Kahf reminder + a one-tap Friday Durood goal of 1000
+- 35 Rabbana Duas — a guided Quranic dua collection in the Adhkar runner (only verses that literally contain "Rabbana", each with its reference)
+- Juz Amma: the last 20 surahs (95–114) in full — Arabic, English & Urdu translations, search, Listen (TTS) and mark-as-read tracking
 - Morning & Evening Adhkar sets — guided sequential runner with auto-advance, completion summary and sharing
 - Asma-ul-Husna: all 99 Names of Allah (searchable), each with its own Tasbih session
 - Wazifa of the Day on Home + Hijri date in the header (Intl Islamic calendar, no API)
 - Fuzzy search across Arabic / transliteration / English / Urdu / keywords (try "stress", "debt", "barakah")
 - Reader with script toggles + Arabic font-size slider (A−/A+), Listen (Arabic text-to-speech), Share/Copy, WhatsApp share, and a downloadable/shareable Wazifa image card (1080×1350 PNG)
 - Digital Tasbih: SVG progress ring, tap to count, haptic vibration, completion double-pulse, sound tick option, rounds tracking, plus a Free Tasbih mode with no target
+- Keep-Awake (Wake Lock) toggle and a distraction-free Focus Mode in the reader (Arabic + counter only)
+- Lifetime stats: every Wazifa tracks its all-time recitation count (never reset by the daily cycle), shown on cards and in the reader
+- Home polish: time-of-day greeting (Subah Bakhair / Shab Bakhair), a Routine completion ring with streak, and app shortcuts (Free Tasbih / Morning / Evening Adhkar via `?open=` deep links, also in the PWA manifest)
 - Custom target per Wazifa (presets 33/100/313/450/1000 or any number), saved per routine
 - My Routine: bookmarks, daily progress bars, midnight local-timezone reset, streak on full completion
 - History & Stats: month calendar of completions, current/longest streak, total dhikr taps, weekly completions
