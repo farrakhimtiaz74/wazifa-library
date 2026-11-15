@@ -1,9 +1,9 @@
 import React from 'react'
-import { Moon, Sun, User, BookOpen } from 'lucide-react'
+import { Flame, Moon, Sun, User, BookOpen } from 'lucide-react'
 import SyncBadge from './SyncBadge'
 import { useAuth } from '../context/AuthContext'
 
-export default function Header({ theme, onToggleTheme, onOpenSettings }) {
+export default function Header({ theme, onToggleTheme, onOpenSettings, streak = 0 }) {
   const { user } = useAuth()
   return (
     <header className="sticky top-0 z-40 backdrop-blur bg-deep/90 dark:bg-[#062C22]/90 bg-[#FAF8F5]/90 border-b border-gold/20 px-4 py-3">
@@ -16,6 +16,7 @@ export default function Header({ theme, onToggleTheme, onOpenSettings }) {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          <span className="inline-flex items-center gap-1 px-2 py-1.5 rounded-full border border-gold/30 text-gold text-xs font-bold" title={`${streak} day streak`} aria-label={`${streak} day streak`}><Flame size={14} />{streak}</span>
           <button onClick={onToggleTheme} className="p-2 rounded-full border border-gold/30" aria-label="Toggle theme">{theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}</button>
           <button onClick={onOpenSettings} className="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-gold text-black text-xs font-bold">
             <User size={14} />{user ? 'Profile' : 'Sign in to Sync'}
