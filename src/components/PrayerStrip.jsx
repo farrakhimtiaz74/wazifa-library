@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Compass, MapPin, RefreshCw } from 'lucide-react'
 import { currentPrayer, fetchPrayerTimes, format12h, loadLocation, nextPrayer } from '../lib/prayerTimes'
+import { hijriParts } from '../lib/hijri'
 import { t } from '../lib/i18n'
 
 function countdownText(ms) {
@@ -12,7 +13,7 @@ function countdownText(ms) {
   return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
 }
 
-export default function PrayerStrip({ lang = 'en', onOpenQibla }) {
+export default function PrayerStrip({ lang = 'en', onOpenQibla, onOpen }) {
   const [data, setData] = useState(null)
   const [failed, setFailed] = useState(false)
   const [now, setNow] = useState(() => new Date())
@@ -62,6 +63,11 @@ export default function PrayerStrip({ lang = 'en', onOpenQibla }) {
               <Compass size={12} /> {t(lang, 'qibla')}
             </button>
           )}
+          {onOpen && (
+            <button onClick={onOpen} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gold text-black font-bold" aria-label={t(lang, 'prayerHub')}>
+              {t(lang, 'prayerHub')}
+            </button>
+          )}
         </span>
       </div>
 
@@ -95,6 +101,20 @@ export default function PrayerStrip({ lang = 'en', onOpenQibla }) {
               </span>
             )}
           </div>
+          {/* Item 52 (Wave 4): during Ramadan only — Sehri end (Fajr) and
+              Iftar (Maghrib) with a live countdown to whichever is next. */}
+          {hijriParts(now).month === 9 && (() => {
+            const at = (hhmm, addDay = 0) => { const [h, m] = hhmm.split(':').map(Number); const d = new Date(now); d.setHours(h, m, 0, 0); d.setDate(d.getDate() + addDay); return d }
+            const fajr = at(timings.Fajr)
+            const maghrib = at(timings.Maghrib)
+            const target = now < fajr ? { label: t(lang, 'sehriEnds'), at: fajr } : now < maghrib ? { label: t(lang, 'iftarAt'), at: maghrib } : { label: t(lang, 'sehriEnds'), at: at(timings.Fajr, 1) }
+            return (
+              <div className="mt-3 rounded-2xl border border-gold/50 bg-gold/10 px-3 py-2.5 flex items-center justify-between gap-2">
+                <span className={`text-[11px] font-bold ${lang === 'ur' ? 'font-urdu' : ''}`}>🌙 {t(lang, 'ramadanBannerTitle')} · {t(lang, 'sehriEnds')} {format12h(timings.Fajr)} · {t(lang, 'iftarAt')} {format12h(timings.Maghrib)}</span>
+                <span className="text-[11px] font-extrabold text-gold shrink-0" role="timer">{target.label} {t(lang, 'prayerIn')} {countdownText(target.at - now)}</span>
+              </div>
+            )
+          })()}
           {data.fromCache && <p className="text-[10px] opacity-50 mt-1.5">{data.stale ? t(lang, 'prayerStale') : t(lang, 'cachedTimes')}</p>}
         </>
       )}
